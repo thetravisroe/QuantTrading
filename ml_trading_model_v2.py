@@ -24,6 +24,9 @@ try:
     df["Return"] = df["Close"].pct_change()
     df["Target"] = (df["Return"].shift(-1) > 0).astype(int)
 
+    # Also precompute actual up/down for each day (for later)
+    df["ActualUp"] = (df["Close"].pct_change() > 0).astype(int)
+
     # ================== FEATURE ENGINEERING ==================
     print(">>> Creating features...")
     df["MA5"] = df["Close"].rolling(5).mean()
@@ -101,27 +104,75 @@ try:
     print(f"    Latest close      : {latest_close:.2f}")
     print(f"    Predicting for    : {next_trading_day}")
     print(f"    Prob market UP    : {prob_up:.3f}")
-    print(f"    Predicted class   : {'UP' if pred_class == 1 else 'NOT UP'}")
+    print(f"    Predicted class   : {'UP' if pred_class == 1 else 'DOWN'}")
 
-    # ================== LOG TO CSV ==================
+    # ================== BUILD NEW LOG ROW (CLEAN FORMAT) ==================
     print(">>> Logging prediction to CSV...")
 
-    now_ts = datetime.now()
+    run_time_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+    confidence_pct = round(float(prob_up) * 100.0, 1)
+
+    # Basic signal label
+    signal_label = "UP" if pred_class == 1 else "DOWN"
+
+    # Simple confidence-based color bucket
+    # You can tweak these thresholds
+    if prob_up >= 0.65 or prob_up <= 0.35:
+        signal_color = "Green"  # high confidence either way
+    else:
+        signal_color = "Yellow"  # medium confidence
 
     log_row = pd.DataFrame(
         {
-            "run_timestamp": [now_ts.isoformat(timespec="seconds")],
-            "ticker": [TICKER],
-            "as_of_date": [latest_date.date().isoformat()],
-            "next_trading_day": [str(next_trading_day)],
-            "latest_close": [latest_close],
-            "prob_up": [float(prob_up)],
-            "pred_class": [int(pred_class)],  # 1 = UP, 0 = NOT UP
+            "Run Time": [run_time_str],
+            "Date Checked": [latest_date.date().isoformat()],
+            "Predicting For": [str(next_trading_day)],
+            "Close": [round(latest_close, 2)],
+            "Prob Up": [round(float(prob_up), 2)],
+            "Confidence %": [confidence_pct],
+            "Signal": [signal_label],
+            # These will be filled for past predictions
+            "Actual Up": [""],
+            "Correct": [""],
+            "Signal Color": [signal_color],
         }
     )
 
-    file_exists = os.path.exists(CSV_PATH)
-    log_row.to_csv(CSV_PATH, mode="a", header=not file_exists, index=False)
+    # ================== LOAD / APPEND / TRIM HISTORY ==================
+    if os.path.exists(CSV_PATH):
+        hist = pd.read_csv(CSV_PATH)
+        hist = pd.concat([hist, log_row], ignore_index=True)
+    else:
+        hist = log_row.copy()
+
+    # ================== FILL 'ACTUAL UP' AND 'CORRECT' WHERE POSSIBLE ==================
+    # Make sure df index is Timestamp for lookup
+    price_index = df.index
+
+    # For each row in hist, if Predicting For date is in our price data,
+    # set Actual Up and Correct
+    for idx, row in hist.iterrows():
+        try:
+            pred_date = pd.to_datetime(row["Predicting For"]).date()
+        except Exception:
+            continue
+
+        # if we have that date in the downloaded df
+        if pd.Timestamp(pred_date) in price_index:
+            actual_val = int(df.loc[pd.Timestamp(pred_date), "ActualUp"])
+            actual_label = "UP" if actual_val == 1 else "DOWN"
+            hist.at[idx, "Actual Up"] = actual_label
+
+            # if we also have a Signal, compute Correct
+            sig = str(row.get("Signal", ""))
+            if sig in ["UP", "DOWN"]:
+                hist.at[idx, "Correct"] = "YES" if sig == actual_label else "NO"
+
+    # Keep only the last 7 rows
+    hist = hist.tail(7)
+
+    # Save back to CSV
+    hist.to_csv(CSV_PATH, index=False)
 
     print(f">>> Logged to {CSV_PATH}")
     print(">>> Done.")
@@ -129,3 +180,4 @@ try:
 except Exception:
     print(">>> ERROR OCCURRED:")
     traceback.print_exc()
+
