@@ -1,2 +1,3 @@
 Run Time,Ticker,Model,Date Checked,Predicting For,Close,Prob Up,Confidence %,Threshold,Signal,Actual Up,Correct,Signal Color
 2025-11-26 13:24,AAPL,GB,2025-11-26,2025-11-27,278.32,0.591,59.1,0.4,UP,,,Yellow
+2025-11-26 14:07,AAPL,RF,2025-11-26,2025-11-27,278.68,0.519,51.9,0.4,UP,,,Grey
