@@ -1,3 +1,5 @@
-run_timestamp,ticker,as_of_date,next_trading_day,latest_close,prob_up,pred_class
-2025-11-24T15:55:08,SPY,2025-11-24,2025-11-25,668.72998046875,0.5625787662256891,1
-2025-11-24T16:06:32,SPY,2025-11-24,2025-11-25,668.72998046875,0.5625787662256893,1
+Run Time,Ticker,Model,Date Checked,Predicting For,Close,Prob Up,Confidence %,Threshold,Signal,Actual Up,Correct,Signal Color
+2025-11-26 13:23,SPY,GB,2025-11-26,2025-11-27,681.08,0.813,81.3,0.525,UP,,,Green
+2025-11-26 13:25,SPY,GB,2025-11-26,2025-11-27,681.21,0.813,81.3,0.45,UP,,,Green
+2025-11-26 13:25,SPY,RF,2025-11-26,2025-11-27,681.16,0.608,60.8,0.4,UP,,,Yellow
+2025-11-26 13:25,SPY,GB,2025-11-26,2025-11-27,681.21,0.74,74.0,0.4,UP,,,Green
