@@ -1,2 +1,2 @@
-Run Time,Ticker,Model,Date Checked,Predicting For,Close,Prob Up,Confidence %,Threshold,Signal,Actual Up,Correct,Signal Color
-2025-11-26 13:24,NVDA,GB,2025-11-26,2025-11-27,180.47,0.464,46.4,0.462,UP,,,Grey
+date,ticker,close,pred_up,prob_up,prob_down,Actual Up
+2025-11-28,NVDA,177.0,1,0.5656076778958785,0.4343923221041215,
